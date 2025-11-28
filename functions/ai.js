@@ -114,7 +114,7 @@ async function getAiDecision({ userInput, sessionId, language = 'ko', intentStat
     ];
     // --- END OF CRITICAL CHANGE ---
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     const requestBody = { 
       contents, 
       systemInstruction: { parts: [{ text: system }] },
@@ -227,7 +227,7 @@ async function getFinalResponse({ userInput, toolResult, language = 'ko', decisi
       { role: 'user', parts: [{ text: contextText }] }
     ];
     
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
     const requestBody = { 
       contents, 
       systemInstruction: { parts: [{ text: system }] },
