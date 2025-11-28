@@ -129,7 +129,19 @@ async function getAiDecision({ userInput, sessionId, language = 'ko', intentStat
     const { data } = await axios.post(url, requestBody);
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    const json = extractJsonFromText(text);
+    let json = extractJsonFromText(text);
+
+    // Handle function_call format from Gemini (convert to expected format)
+    if (json && json.function_call && !json.action) {
+      console.log('🔄 [AI] function_call 형식 감지, CALL_FUNCTION으로 변환');
+      json = {
+        action: 'CALL_FUNCTION',
+        functionName: json.function_call.name,
+        parameters: json.function_call.parameters || json.function_call.arguments || {},
+        nextState: json.nextState || 'IDLE'
+      };
+    }
+
     // --- START OF CRITICAL CHANGE: hardened fallback ---
     if (!json || !json.action) {
       console.warn('⚠️ [AI] 유효한 JSON 액션을 받지 못했습니다. 사용자에게 재요청합니다.', { receivedText: text });
