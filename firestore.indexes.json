@@ -1,0 +1,119 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "orderBy": [
+        {
+          "field": "chatKey",
+          "direction": "ASCENDING"
+        },
+        {
+          "field": "timestamp",
+          "direction": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "orderBy": [
+        {
+          "field": "source",
+          "direction": "ASCENDING"
+        },
+        {
+          "field": "timestamp",
+          "direction": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "chatrooms",
+      "queryScope": "COLLECTION",
+      "orderBy": [
+        {
+          "field": "lastMessageAt",
+          "direction": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "chatrooms",
+      "queryScope": "COLLECTION",
+      "orderBy": [
+        {
+          "field": "channelType",
+          "direction": "ASCENDING"
+        },
+        {
+          "field": "lastMessageAt",
+          "direction": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sessionModes",
+      "queryScope": "COLLECTION",
+      "orderBy": [
+        {
+          "field": "updatedAt",
+          "direction": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "bookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "bookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "pendingBookings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

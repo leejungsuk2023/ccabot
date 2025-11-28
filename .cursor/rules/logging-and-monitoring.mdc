@@ -1,0 +1,201 @@
+# Logging and Monitoring Best Practices
+
+## 📋 Log Collection Strategy
+
+### Automated Log Collection
+Create [get_logs.bat](mdc:get_logs.bat) for automated log collection:
+```batch
+@echo off
+REM Firebase Functions 로그 저장 스크립트
+
+echo 📋 Firebase Functions 로그를 수집합니다...
+
+REM 현재 시간을 파일명에 포함
+set TIMESTAMP=%date:~0,4%%date:~5,2%%date:~8,2%_%time:~0,2%%time:~3,2%%time:~6,2%
+set TIMESTAMP=%TIMESTAMP: =0%
+
+REM 로그 파일명 설정
+set LOG_FILE=firebase_logs_%TIMESTAMP%.txt
+
+REM Firebase Functions 로그 수집
+firebase functions:log --only channelTalkWebhook > %LOG_FILE% 2>&1
+
+echo ✅ 로그 수집 완료!
+echo 📁 저장 위치: %LOG_FILE%
+```
+
+### Manual Log Collection
+```bash
+# Collect all function logs
+firebase functions:log
+
+# Collect specific function logs
+firebase functions:log --only channelTalkWebhook
+firebase functions:log --only updateAIBrainHttp
+
+# Real-time log monitoring
+firebase functions:log --follow
+```
+
+## 🔍 Critical Log Analysis Patterns
+
+### 1. FAQ Data Loading Verification
+**Look for in logs**:
+```javascript
+// ✅ Correct data loading
+🔍 [AI] Firestore에서 조회한 FAQ 데이터: [{"id":"faq3","answer":"강남역 2번 출구..."}]
+
+// ❌ Old data still loading
+🔍 [AI] Firestore에서 조회한 FAQ 데이터: [{"id":"faq3","answer":"강남역 11번 출구..."}]
+```
+
+### 2. AI Update Function Verification
+**Look for in logs**:
+```javascript
+// ✅ Successful update
+🔍 [UPDATE] knowledge_base/faqs 업데이트 시작
+🔍 [UPDATE] 저장할 데이터: [{"id":"faq5","question":"병원은 어디에 있어요?"...}]
+✅ knowledge_base/faqs 업데이트 완료
+
+// ❌ Update failure
+❌ knowledge_base/faqs 업데이트 실패: Error message
+```
+
+### 3. Response Generation Monitoring
+**Look for in logs**:
+```javascript
+// ✅ Immediate response (no delay)
+🚀 [AI] 채널톡으로 답변 전송 시작...
+
+// ❌ Delayed response (old code)
+⏰ [AI] 25초 대기 시작...
+⏰ [AI] 25초 대기 완료. 채널톡으로 답변 전송 시작...
+```
+
+## 📊 Log Analysis Workflow
+
+### Step 1: Collect Logs
+```bash
+# Automated collection
+get_logs.bat
+
+# Manual collection
+firebase functions:log --only channelTalkWebhook > debug_logs.txt
+```
+
+### Step 2: Analyze Key Patterns
+1. **Data Loading**: Check if FAQ data is current
+2. **Update Success**: Verify AI update function execution
+3. **Response Quality**: Monitor AI response content
+4. **Performance**: Check for unnecessary delays
+5. **API Calls**: Verify successful external API calls
+
+### Step 3: Identify Issues
+```javascript
+// Common issues to look for:
+- "No FAQs found" - Data not loaded
+- "강남역 11번 출구" - Old data still in use
+- "개인정보 보호" - AI instruction not followed
+- "25초 대기" - Unnecessary delays
+```
+
+## 🚨 Error Pattern Recognition
+
+### Data Synchronization Errors
+```javascript
+// Problem: Old data persists
+"faq3","answer":"저희 클리닉은 강남역 11번 출구에서..."
+
+// Solution: Re-run update function
+curl "https://asia-northeast3-project-id.cloudfunctions.net/updateAIBrainHttp"
+```
+
+### AI Instruction Failures
+```javascript
+// Problem: AI ignores instructions
+"죄송합니다. 병원의 정확한 위치는 개인정보 보호를 위해..."
+
+// Solution: Strengthen AI instructions
+- "개인정보 보호" 또는 "온라인으로 공개할 수 없습니다" 같은 답변은 절대 사용하지 마세요.
+```
+
+### Performance Issues
+```javascript
+// Problem: Slow responses
+⏰ [AI] 25초 대기 시작...
+⏰ [AI] 25초 대기 완료...
+
+// Solution: Remove delays
+// await new Promise(resolve => setTimeout(resolve, 25000));
+```
+
+## 🔧 Debugging Commands Reference
+
+### Function Deployment
+```bash
+# Deploy specific function
+firebase deploy --only functions:channelTalkWebhook
+firebase deploy --only functions:updateAIBrainHttp
+
+# Deploy all functions
+firebase deploy --only functions
+```
+
+### Log Collection
+```bash
+# Collect logs with timestamp
+get_logs.bat
+
+# Collect specific function logs
+firebase functions:log --only channelTalkWebhook
+firebase functions:log --only updateAIBrainHttp
+
+# Real-time monitoring
+firebase functions:log --follow
+```
+
+### Function Testing
+```bash
+# Test AI update function
+curl "https://asia-northeast3-project-id.cloudfunctions.net/updateAIBrainHttp"
+
+# Test webhook function
+curl -X POST "https://asia-northeast3-project-id.cloudfunctions.net/channelTalkWebhook"
+```
+
+## 📈 Monitoring Metrics
+
+### Key Performance Indicators
+1. **Response Time**: Should be immediate (no 25s delays)
+2. **Data Accuracy**: FAQ data should match CSV content
+3. **AI Compliance**: No "privacy policy" responses
+4. **Update Success**: AI update function completes successfully
+5. **API Success**: All external API calls succeed
+
+### Success Indicators
+```javascript
+// ✅ Good response time
+🚀 [AI] 채널톡으로 답변 전송 시작...
+
+// ✅ Correct data usage
+"저희 클리닉은 강남역 2번 출구에서 도보 5분 거리에 있습니다."
+
+// ✅ Successful API call
+✅ [AI] 채널톡으로 답변 전송 완료
+```
+
+### Failure Indicators
+```javascript
+// ❌ Slow response
+⏰ [AI] 25초 대기 시작...
+
+// ❌ Wrong data
+"강남역 11번 출구"
+
+// ❌ Unwanted response
+"개인정보 보호를 위해 온라인으로 공개할 수 없습니다"
+```
+description:
+globs:
+alwaysApply: false
+---

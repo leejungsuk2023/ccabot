@@ -1,0 +1,46 @@
+# Firebase Functions v2 Syntax Rules
+
+## Critical: Always use correct v2 syntax to prevent POST 500 errors
+
+### ✅ CORRECT Syntax (Use this)
+```javascript
+const { https } = require("firebase-functions/v2");
+
+exports.channelTalkWebhook = https.onRequest({
+  region: "asia-northeast3"
+}, async (req, res) => {
+  // Your function logic here
+});
+```
+
+### ❌ INCORRECT Syntax (Never use this)
+```javascript
+const {onRequest} = require("firebase-functions/v2/https");
+
+exports.channelTalkWebhook = onRequest({
+  region: "asia-northeast3"
+}, async (req, res) => {
+  // This will cause POST 500 Internal Server Error
+});
+```
+
+## Key Points:
+1. Import `https` from `firebase-functions/v2` (not `/https`)
+2. Use `https.onRequest()` instead of `onRequest()`
+3. Always specify region for better performance
+4. Use Node.js 22 runtime for latest features
+
+## Common Error Pattern:
+- POST 500 Internal Server Error during deployment
+- Function fails to start due to syntax error
+- GCF returns 500 status code
+
+## Debugging Steps:
+1. Check require statement syntax
+2. Verify function export syntax
+3. Ensure region is specified
+4. Deploy with `firebase deploy --only functions`
+description:
+globs:
+alwaysApply: false
+---

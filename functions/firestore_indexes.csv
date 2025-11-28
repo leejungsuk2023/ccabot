@@ -1,0 +1,6 @@
+collection_group,query_scope,field_path,order,index_type,composite_group
+bookings,COLLECTION,createdAt,DESCENDING,single_field,
+bookings,COLLECTION,userId,ASCENDING,composite,bookings_user_created
+bookings,COLLECTION,createdAt,DESCENDING,composite,bookings_user_created
+pendingBookings,COLLECTION,userId,ASCENDING,composite,pending_user_updated
+pendingBookings,COLLECTION,updatedAt,DESCENDING,composite,pending_user_updated

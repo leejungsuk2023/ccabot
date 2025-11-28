@@ -1,0 +1,71 @@
+# 프로젝트 정리 및 파일 관리 가이드
+
+## 🧹 루트 폴더 정리 원칙
+
+### 삭제 대상 파일들
+- **로그 파일**: `detailed_logs.txt`, `logs.txt` 등 (일회성)
+- **일회성 스크립트**: `clone_project.sh`, `update_clinic_brain_final.sh` 등
+- **테스트 파일**: `test-*.json` 파일들
+- **중복 배포 스크립트**: 하나의 메인 스크립트만 유지
+
+### 유지 대상 파일들
+- **Firebase 설정**: [firebase.json](mdc:firebase.json), [.firebaserc](mdc:.firebaserc)
+- **Firestore 설정**: [firestore.indexes.json](mdc:firestore.indexes.json)
+- **Git 설정**: [.gitignore](mdc:.gitignore)
+- **문서**: [README.md](mdc:README.md), [PROJECT_SUMMARY.md](mdc:PROJECT_SUMMARY.md)
+
+## 📁 Functions 폴더 정리
+
+### 핵심 파일들
+- [functions/index.js](mdc:functions/index.js) - 메인 함수 코드
+- [functions/package.json](mdc:functions/package.json) - 의존성 관리
+- [functions/deploy-final.bat](mdc:functions/deploy-final.bat) - 메인 배포 스크립트
+- [functions/update_ai_brain.js](mdc:functions/update_ai_brain.js) - AI 업데이트 도구
+
+### 정리 대상
+- 여러 개의 deploy 스크립트 (하나만 유지)
+- 빈 로그 파일들
+- 일회성 데이터 업로드 도구들
+
+## 🔧 스크립트 실행 환경
+
+### Windows 환경
+- `.bat` 파일은 cmd에서 실행
+- Git Bash에서는 `cmd /c "command"` 사용
+- 또는 `.sh` 파일 생성 후 `bash script.sh` 실행
+
+### 의존성 관리
+- 새로운 라이브러리 추가 시 [functions/package.json](mdc:functions/package.json) 업데이트
+- `npm install` 실행으로 의존성 설치 확인
+
+## 📊 CSV 데이터 관리
+
+### 파일 위치
+- [functions/products.csv](mdc:functions/products.csv) - 시술 정보
+- [functions/promotions.csv](mdc:functions/promotions.csv) - 프로모션 정보  
+- [functions/faqs.csv](mdc:functions/faqs.csv) - FAQ 정보
+
+### 업데이트 방법
+- 웹 API: `https://asia-northeast3-careconnectai-51631.cloudfunctions.net/updateAIBrainHttp`
+- 로컬: `node update_ai_brain.js` (Firebase Functions 환경에서만)
+
+## 🎯 AI 두뇌 업데이트 프로세스
+
+### 업데이트 대상
+1. **knowledge_base/products** - 시술 및 가격 정보
+2. **knowledge_base/promotions** - 프로모션 정보
+3. **knowledge_base/faqs** - 자주 묻는 질문
+4. **policyContext/default** - AI 행동 지침
+
+### 실행 확인
+```bash
+# 웹에서 실행
+curl "https://asia-northeast3-careconnectai-51631.cloudfunctions.net/updateAIBrainHttp"
+
+# 응답 확인
+{"success":true,"message":"AI 두뇌 업데이트가 성공적으로 완료되었습니다!"}
+```
+description:
+globs:
+alwaysApply: false
+---

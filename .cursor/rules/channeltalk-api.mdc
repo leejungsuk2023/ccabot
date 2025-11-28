@@ -1,0 +1,88 @@
+# ChannelTalk API Integration Rules
+
+## Critical: Always include botName parameter to prevent "Cannot be empty" errors
+
+### ✅ CORRECT Implementation
+```javascript
+// 1. Extract language and prepare message
+const language = messageEntity.language || 'ko';
+const aiReply = aiReply.trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
+
+// 2. Create URL with botName parameter (CRITICAL!)
+const botName = encodeURIComponent("케어커넥트 AI");
+const channelTalkUrl = `https://api.channel.io/open/v5/user-chats/${userChatId}/messages?botName=${botName}`;
+
+// 3. Use blocks format for payload
+const channelTalkPayload = { 
+  messageId: uuidv4(),
+  blocks: [
+    {
+      type: "text",
+      value: aiReply
+    }
+  ]
+};
+
+// 4. Make API call with proper headers
+await axios.post(channelTalkUrl, channelTalkPayload, {
+  headers: { 
+    'x-access-key': CHANNELTALK_ACCESS_KEY, 
+    'x-access-secret': CHANNELTALK_ACCESS_SECRET,
+    'Content-Type': 'application/json'
+  },
+});
+```
+
+### ❌ INCORRECT Implementation (Causes validationError)
+```javascript
+// Missing botName parameter
+const channelTalkUrl = `https://api.channel.io/open/v5/user-chats/${userChatId}/messages`;
+
+// Using message field instead of blocks
+const channelTalkPayload = { 
+  message: aiReply, 
+  messageId: uuidv4() 
+};
+```
+
+## Key Requirements:
+
+### 1. Bot Configuration (ChannelTalk Admin Panel)
+- Create bot profile in ChannelTalk settings
+- Bot name must match `botName` in code exactly
+- Ensure API key has message sending permissions
+
+### 2. Message Processing
+- Remove newline characters: `aiReply.replace(/\n/g, ' ')`
+- Remove special characters: `aiReply.replace(/"/g, '').replace(/\\/g, '')`
+- Trim whitespace: `aiReply.trim()`
+- Limit message length: `aiReply.substring(0, 997) + "..."`
+
+### 3. Error Handling
+```javascript
+try {
+  const channelTalkResponse = await axios.post(channelTalkUrl, channelTalkPayload, {
+    headers: { 'x-access-key': CHANNELTALK_ACCESS_KEY, 'x-access-secret': CHANNELTALK_ACCESS_SECRET },
+  });
+  console.log(`✅ [AI] 채널톡으로 답변 전송 완료 (봇: ${botName})`);
+} catch (channelTalkError) {
+  console.error('❌ [AI] 채널톡 API 호출 실패:', channelTalkError.response?.data);
+  throw channelTalkError;
+}
+```
+
+## Common Error Patterns:
+- `validationError: Cannot be empty`
+- `status: 422` with empty message field
+- Bot messages not appearing in chat
+
+## Debugging Checklist:
+1. ✅ Bot profile created in ChannelTalk
+2. ✅ botName parameter included in URL
+3. ✅ blocks format used for payload
+4. ✅ Message content properly cleaned
+5. ✅ API keys have correct permissions
+description:
+globs:
+alwaysApply: false
+---

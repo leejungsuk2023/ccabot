@@ -1,0 +1,42 @@
+node_modules/
+*.local
+
+# 환경 변수 파일 (보안상 중요!)
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+
+# Firebase 설정 파일
+service-account-key.json
+*-service-account-key.json
+serviceAccountKey.json
+firebase-debug.log
+firebase-debug.*.log
+
+# 로그 파일
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 런타임 데이터
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 커버리지 디렉토리
+coverage/
+.nyc_output
+
+# IDE 파일
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 파일
+.DS_Store
+Thumbs.db

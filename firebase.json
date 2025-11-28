@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22",
+    "region": "asia-northeast3"
+  },
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  }
+}

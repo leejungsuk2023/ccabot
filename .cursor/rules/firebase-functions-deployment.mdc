@@ -1,0 +1,61 @@
+# Firebase Functions 배포 및 실행 가이드
+
+## 🔧 Firebase Functions v2 문법 (중요!)
+Firebase Functions v2를 사용할 때는 반드시 올바른 문법을 사용해야 합니다:
+
+```javascript
+// ✅ 올바른 문법
+const { https } = require("firebase-functions/v2");
+exports.functionName = https.onRequest({region: "asia-northeast3"}, async (req, res) => {
+  // 함수 로직
+});
+
+// ❌ 잘못된 문법 (v1 스타일)
+const {onRequest} = require("firebase-functions/v2/https");
+exports.functionName = onRequest({...}, async (req, res) => {
+```
+
+## 🚀 로컬 실행 vs 클라우드 배포
+
+### 로컬 실행 시 주의사항
+- Firebase Admin SDK 인증 문제 발생 가능
+- `serviceAccountKey.json` 파일이 필요하거나 환경 변수 설정 필요
+- 로컬에서는 `process.env.FUNCTIONS_EMULATOR` 체크 필요
+
+### 클라우드 배포 권장사항
+- Firebase Functions 환경에서는 자동 인증 처리
+- CSV 파일은 functions 폴더에 포함되어야 함
+- 배포 후 HTTP 트리거로 실행하는 것이 안정적
+
+## 📁 파일 구조 및 의존성
+
+### 필수 파일들
+- [functions/index.js](mdc:functions/index.js) - 메인 함수들
+- [functions/package.json](mdc:functions/package.json) - 의존성 관리
+- [firebase.json](mdc:firebase.json) - Firebase 설정
+- [.firebaserc](mdc:.firebaserc) - 프로젝트 설정
+
+### CSV 파일 처리
+- CSV 파일은 [functions/](mdc:functions/) 폴더에 위치
+- `csv-parser` 라이브러리 필수 추가
+- 파일 경로는 `path.join(__dirname, 'filename.csv')` 사용
+
+## 🔍 디버깅 팁
+
+### 일반적인 오류들
+1. **Project ID 오류**: `admin.initializeApp({projectId: 'your-project-id'})`
+2. **인증 오류**: 클라우드 환경에서는 `admin.initializeApp()`만 사용
+3. **파일 경로 오류**: `__dirname`을 사용하여 절대 경로 생성
+
+### 배포 확인
+```bash
+# 함수 배포
+firebase deploy --only functions:functionName
+
+# 함수 URL 확인
+curl "https://asia-northeast3-project-id.cloudfunctions.net/functionName"
+```
+description:
+globs:
+alwaysApply: false
+---

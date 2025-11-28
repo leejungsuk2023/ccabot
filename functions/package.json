@@ -1,0 +1,42 @@
+{
+  "name": "functions",
+  "description": "Cloud Functions for Firebase - CareConnectBot (v1.1.0)",
+  "version": "1.1.0",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "setup-env": "echo 'Firebase Functions 환경변수 설정은 .env 파일 또는 Firebase Console에서 수동으로 설정해주세요.' && echo 'firebase functions:config:set channeltalk.access_key=YOUR_KEY' && echo 'firebase functions:config:set channeltalk.access_secret=YOUR_SECRET' && echo 'firebase functions:config:set gemini.api_key=YOUR_GEMINI_KEY' && echo 'firebase functions:config:set google.calendar_id=YOUR_CALENDAR_ID'",
+    "deploy-full": "npm run setup-env && npm run deploy",
+    "update-ai": "node update_ai_brain_v5.js",
+    "save-logs": "firebase functions:log > ../logs/firebase_logs_$(date +%Y%m%d_%H%M%S).txt 2>&1 || firebase functions:log"
+  },
+  "engines": {
+    "node": "22"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.6.7",
+    "csv-parse": "^5.6.0",
+    "csv-parser": "^3.0.0",
+    "dotenv": "^17.2.1",
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.1.0",
+    "googleapis": "^140.0.1",
+    "pdf-parse": "^1.1.1",
+    "uuid": "^9.0.1",
+    "zod": "^4.0.17"
+  },
+  "private": true,
+  "keywords": [
+    "firebase",
+    "functions",
+    "channeltalk",
+    "botpress",
+    "chatbot",
+    "ai"
+  ],
+  "author": "CareConnectBot Team",
+  "license": "MIT"
+}

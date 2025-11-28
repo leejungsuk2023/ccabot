@@ -1,0 +1,252 @@
+# AI Chatbot Architecture Best Practices
+
+## System Architecture Pattern
+
+### ✅ Recommended Architecture
+```
+ChannelTalk → GCF Webhook → Gemini AI → Firestore → ChannelTalk
+```
+
+### Key Components:
+1. **Webhook Receiver**: Firebase Functions v2
+2. **AI Processor**: Gemini API with language detection
+3. **Data Layer**: Firestore for conversations and settings
+4. **Message Sender**: ChannelTalk API with bot profile
+
+## Critical Implementation Patterns
+
+### 1. Message Processing Pipeline
+```javascript
+// 1. Extract webhook data
+const messageEntity = req.body.entity;
+const refers = req.body.refers;
+const language = messageEntity.language || 'ko';
+
+// 2. Validate and filter messages
+if (messageEntity.log || !text || !text.trim()) {
+  return res.status(200).send('ignored');
+}
+
+// 3. Store in database
+await db.collection('conversations').doc(messageId).set({
+  userId, userChatId, chatKey,
+  sender: personType === 'manager' ? 'human' : 'user',
+  text, timestamp: admin.firestore.Timestamp.fromMillis(messageEntity.createdAt)
+});
+
+// 4. Process with AI
+const aiReply = await generateAIResponse(text, language, userId);
+
+// 5. Send response with delay
+await new Promise(resolve => setTimeout(resolve, 25000));
+await sendChannelTalkMessage(userChatId, aiReply, botName);
+```
+
+### 2. Dynamic Data Integration
+```javascript
+// Parallel data fetching for performance
+const [policyDoc, promotionsDoc, pricingDoc] = await Promise.all([
+  db.collection('policyContext').doc('default').get(),
+  db.collection('promotions').doc('current').get(),
+  db.collection('pricing').doc('products').get()
+]);
+
+// Combine into system instruction
+const enhancedSystemInstruction = `${policyContext}
+현재 프로모션 정보: ${promotionsInfo}
+제품 가격 정보: ${pricingInfo}`;
+```
+
+### 3. Error Handling and Safety Nets
+```javascript
+// AI response safety
+if (!aiReply || !aiReply.trim()) {
+  aiReply = "죄송합니다. 답변을 생성하는 중 문제가 발생했습니다. 담당자가 확인 후 답변드리겠습니다.";
+}
+
+// Message cleaning for API compatibility
+aiReply = aiReply.trim()
+  .replace(/\n/g, ' ')
+  .replace(/\s+/g, ' ')
+  .replace(/"/g, '')
+  .replace(/\\/g, '');
+
+// Length limiting
+if (aiReply.length > 1000) {
+  aiReply = aiReply.substring(0, 997) + "...";
+}
+```
+
+## Firestore Collection Structure
+
+### Required Collections:
+```javascript
+// conversations - Chat history
+{
+  userId: string,
+  userChatId: string,
+  chatKey: string,
+  sender: 'user' | 'ai' | 'human',
+  text: string,
+  timestamp: Timestamp
+}
+
+// sessionModes - User mode management
+{
+  mode: 'AI_MODE' | 'HUMAN_MODE',
+  updatedAt: Date
+}
+
+// policyContext - AI behavior guidelines
+{
+  content: string
+}
+
+// promotions - Dynamic promotion data
+{
+  content: string
+}
+
+// pricing - Dynamic pricing data
+{
+  content: string
+}
+```
+
+## Performance Optimization
+
+### 1. Memory and Instance Management
+```javascript
+exports.channelTalkWebhook = https.onRequest({
+  region: "asia-northeast3",
+  memory: "256Mi",
+  maxInstances: 20,
+  timeoutSeconds: 60
+}, async (req, res) => {
+```
+
+### 2. Database Query Optimization
+```javascript
+// Limit conversation history for performance
+const snapshot = await db.collection('conversations')
+  .where('userId', '==', userId)
+  .orderBy('timestamp', 'desc')
+  .limit(15)
+  .get();
+```
+
+### 3. Parallel Processing
+```javascript
+// Use Promise.all for concurrent operations
+const [conversationHistory, policyData] = await Promise.all([
+  getConversationHistory(userId),
+  getPolicyContext()
+]);
+```
+
+## Security and Configuration
+
+### 1. Environment Variables
+```javascript
+// Development (hardcoded for testing)
+const CHANNELTALK_ACCESS_KEY = "your_access_key";
+const CHANNELTALK_ACCESS_SECRET = "your_access_secret";
+const GEMINI_API_KEY = "your_gemini_key";
+
+// Production (use Firebase Secrets)
+exports.channelTalkWebhook = https.onRequest({
+  region: "asia-northeast3",
+  secrets: ["CHANNELTALK_ACCESS_KEY", "CHANNELTALK_ACCESS_SECRET", "GEMINI_API_KEY"]
+}, async (req, res) => {
+```
+
+### 2. Input Validation
+```javascript
+// Validate webhook data
+if (!messageEntity || !refers || !refers.userChat) {
+  console.log('필수 데이터가 없어 요청을 무시합니다.');
+  return res.status(200).send('ignored: missing data');
+}
+
+// Validate API keys
+if (!CHANNELTALK_ACCESS_KEY || !CHANNELTALK_ACCESS_SECRET) {
+  throw new Error('채널톡 API 키가 설정되지 않았습니다.');
+}
+```
+
+## Monitoring and Debugging
+
+### 1. Comprehensive Logging
+```javascript
+// Request logging
+console.log('📨 [Webhook] 요청 수신됨');
+console.log('🔍 [Webhook] 채널톡에서 받은 언어 정보:', messageEntity.language);
+console.log('🔍 [Webhook] 최종 사용 언어:', language);
+
+// AI processing logging
+console.log('🔍 [AI] Gemini에게 보내는 최종 요청 데이터:', JSON.stringify(geminiRequestBody, null, 2));
+console.log('📤 [AI] Gemini로부터 받은 응답 전체:', JSON.stringify(geminiResponse.data, null, 2));
+
+// API call logging
+console.log('🔍 [AI] 채널톡 API 요청 데이터:', JSON.stringify(channelTalkPayload, null, 2));
+console.log('✅ [AI] 채널톡으로 답변 전송 완료 (봇: ${botName})');
+```
+
+### 2. Error Tracking
+```javascript
+try {
+  // AI processing
+} catch (geminiError) {
+  console.error('❌ [AI] Gemini API 호출 중 에러 발생:', geminiError.message);
+  aiReply = "죄송합니다. AI 엔진에 문제가 발생했습니다. 담당자가 곧 확인하겠습니다.";
+}
+
+try {
+  // ChannelTalk API call
+} catch (channelTalkError) {
+  console.error('❌ [AI] 채널톡 API 호출 실패:', channelTalkError.response?.data);
+  throw channelTalkError;
+}
+```
+
+## Deployment Checklist
+
+### Pre-deployment:
+- [ ] Firebase Functions v2 syntax verified
+- [ ] All API keys configured
+- [ ] ChannelTalk bot profile created
+- [ ] Firestore collections initialized
+- [ ] Error handling implemented
+- [ ] Logging system in place
+
+### Post-deployment:
+- [ ] Webhook URL configured in ChannelTalk
+- [ ] Test messages sent and received
+- [ ] AI responses working correctly
+- [ ] Language detection functioning
+- [ ] Error logs monitored
+- [ ] Performance metrics checked
+
+## Common Anti-patterns to Avoid
+
+### ❌ Don't:
+- Use Firebase Functions v1 syntax
+- Skip botName parameter in ChannelTalk API
+- Use weak language instructions
+- Store sensitive data in code
+- Ignore error handling
+- Skip message cleaning
+- Use synchronous operations where async is needed
+
+### ✅ Do:
+- Use Firebase Functions v2 syntax
+- Include botName in ChannelTalk API calls
+- Implement strong language enforcement
+- Use environment variables for secrets
+- Implement comprehensive error handling
+- Clean and validate all messages
+- Use Promise.all for parallel operations
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,153 @@
+# 오류 처리 및 문제 해결 가이드
+
+## 🔥 주요 오류 패턴 및 해결책
+
+### 1. Firebase Functions v2 문법 오류
+**오류**: `POST 500 Internal Server Error`
+**원인**: 구버전 문법 사용
+```javascript
+// ❌ 잘못된 문법
+const {onRequest} = require("firebase-functions/v2/https");
+exports.functionName = onRequest({...}, async (req, res) => {
+
+// ✅ 올바른 문법
+const { https } = require("firebase-functions/v2");
+exports.functionName = https.onRequest({region: "asia-northeast3"}, async (req, res) => {
+```
+
+### 2. Firebase Admin SDK 인증 오류
+**오류**: `Could not load the default credentials`
+**원인**: 로컬 환경에서 인증 정보 부족
+**해결책**:
+```javascript
+// 클라우드 환경에서는 자동 인증
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
+
+// 로컬 테스트 시에는 프로젝트 ID 명시
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: 'your-project-id'
+  });
+}
+```
+
+### 3. Project ID 감지 오류
+**오류**: `Unable to detect a Project Id in the current environment`
+**해결책**: 
+- [.firebaserc](mdc:.firebaserc) 파일에서 프로젝트 ID 확인
+- 환경 변수 `GOOGLE_CLOUD_PROJECT` 설정
+- Firebase CLI 로그인 확인: `firebase login`
+
+### 4. 파일 경로 오류
+**오류**: `ENOENT: no such file or directory`
+**해결책**:
+```javascript
+// ✅ 절대 경로 사용
+const path = require('path');
+const filePath = path.join(__dirname, 'filename.csv');
+
+// ❌ 상대 경로 사용 (오류 발생 가능)
+const filePath = './filename.csv';
+```
+
+### 5. Git Bash에서 .bat 파일 실행 오류
+**오류**: `bash: run_update_ai_brain.bat: command not found`
+**해결책**:
+```bash
+# 방법 1: cmd 사용
+cmd /c "cd functions && run_update_ai_brain.bat"
+
+# 방법 2: .sh 파일 생성
+bash run_update_ai_brain.sh
+
+# 방법 3: 직접 명령어 실행
+npm install && node update_ai_brain.js
+```
+
+## 🔧 디버깅 전략
+
+### 1. 단계별 테스트
+```javascript
+// 1. 파일 존재 확인
+console.log('CSV 파일 경로:', filePath);
+console.log('파일 존재:', fs.existsSync(filePath));
+
+// 2. CSV 읽기 테스트
+const data = await readCSVFile(filePath);
+console.log('읽은 데이터:', data);
+
+// 3. Firestore 연결 테스트
+const testDoc = await db.collection('test').doc('test').get();
+console.log('Firestore 연결 성공');
+```
+
+### 2. 환경 변수 확인
+```javascript
+// 환경 정보 로깅
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('FUNCTIONS_EMULATOR:', process.env.FUNCTIONS_EMULATOR);
+console.log('GOOGLE_CLOUD_PROJECT:', process.env.GOOGLE_CLOUD_PROJECT);
+```
+
+### 3. 의존성 확인
+```bash
+# package.json 의존성 확인
+npm list csv-parser firebase-admin firebase-functions
+
+# 누락된 의존성 설치
+npm install csv-parser
+```
+
+## 🚀 배포 전 체크리스트
+
+### 1. 코드 검증
+- [ ] Firebase Functions v2 문법 사용
+- [ ] 파일 경로가 `__dirname` 기반
+- [ ] 에러 핸들링 포함
+- [ ] 로깅 추가
+
+### 2. 의존성 확인
+- [ ] [functions/package.json](mdc:functions/package.json)에 필요한 라이브러리 포함
+- [ ] `npm install` 실행 완료
+- [ ] `package-lock.json` 최신 상태
+
+### 3. 파일 구조 확인
+- [ ] CSV 파일들이 [functions/](mdc:functions/) 폴더에 위치
+- [ ] [firebase.json](mdc:firebase.json) 설정 올바름
+- [ ] [.firebaserc](mdc:.firebaserc) 프로젝트 ID 올바름
+
+### 4. 배포 후 검증
+```bash
+# 함수 URL 확인
+firebase functions:list
+
+# 함수 테스트
+curl "https://asia-northeast3-project-id.cloudfunctions.net/functionName"
+
+# 로그 확인
+firebase functions:log --only functionName
+```
+
+## 📊 성공적인 실행 확인
+
+### 정상 응답 예시
+```json
+{
+  "success": true,
+  "message": "AI 두뇌 업데이트가 성공적으로 완료되었습니다!"
+}
+```
+
+### 오류 응답 예시
+```json
+{
+  "success": false,
+  "error": "CSV 파일을 읽을 수 없습니다: ENOENT: no such file or directory"
+}
+```
+description:
+globs:
+alwaysApply: false
+---

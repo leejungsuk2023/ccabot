@@ -1,0 +1,117 @@
+# Debugging and Troubleshooting Guide
+
+## 🔍 Critical Debugging Steps for AI Chatbot Issues
+
+### 1. Data Synchronization Issues
+When AI responses don't match updated CSV data:
+
+**Problem**: AI still returns old responses despite CSV updates
+**Root Cause**: Firestore data not properly updated or cached
+**Solution**:
+```javascript
+// Add detailed logging to updateFirestoreDocument function
+console.log(`🔍 [UPDATE] ${collection}/${documentId} 업데이트 시작`);
+console.log(`🔍 [UPDATE] 저장할 데이터:`, JSON.stringify(data, null, 2));
+
+// Verify saved data after update
+const savedDoc = await db.collection(collection).doc(documentId).get();
+console.log(`🔍 [UPDATE] 저장된 데이터 확인:`, JSON.stringify(savedDoc.data(), null, 2));
+```
+
+### 2. AI Instruction Enhancement
+When AI ignores updated data:
+
+**Problem**: AI continues using old response patterns
+**Solution**: Strengthen AI instructions in [functions/index.js](mdc:functions/index.js)
+```javascript
+// Add explicit instructions to prevent unwanted responses
+- 위치 관련 질문에는 반드시 FAQ의 정확한 위치 정보를 사용하세요.
+- "개인정보 보호" 또는 "온라인으로 공개할 수 없습니다" 같은 답변은 절대 사용하지 마세요.
+```
+
+### 3. Response Delay Issues
+When responses are unnecessarily slow:
+
+**Problem**: 25-second artificial delay in responses
+**Solution**: Remove delay code from [functions/index.js](mdc:functions/index.js)
+```javascript
+// ❌ Remove this code
+await new Promise(resolve => setTimeout(resolve, 25000));
+
+// ✅ Replace with immediate response
+console.log('🚀 [AI] 채널톡으로 답변 전송 시작...');
+```
+
+## 📊 Log Analysis Patterns
+
+### Key Log Entries to Monitor
+1. **FAQ Data Loading**: Check if updated FAQ data appears in logs
+2. **AI Response Generation**: Verify AI receives correct data
+3. **Firestore Updates**: Confirm data is properly saved
+4. **API Calls**: Monitor successful API responses
+
+### Common Error Patterns
+```javascript
+// ❌ Old data still in logs
+"faq3","answer":"저희 클리닉은 강남역 11번 출구에서..."
+
+// ✅ Updated data should appear
+"faq3","answer":"저희 클리닉은 강남역 2번 출구에서..."
+```
+
+## 🚀 Deployment Verification
+
+### Pre-Deployment Checklist
+- [ ] CSV files updated with correct data
+- [ ] AI update function executed successfully
+- [ ] Firestore data verified through logs
+- [ ] AI instructions enhanced to prevent unwanted responses
+- [ ] Response delays removed
+
+### Post-Deployment Verification
+```bash
+# Collect logs for analysis
+get_logs.bat
+
+# Check AI update function logs
+firebase functions:log --only updateAIBrainHttp
+
+# Test AI response
+curl "https://asia-northeast3-project-id.cloudfunctions.net/updateAIBrainHttp"
+```
+
+## 🔧 Data Flow Debugging
+
+### Expected Data Flow
+```
+CSV Update → AI Update Function → Firestore → AI Response Function → ChannelTalk
+```
+
+### Debugging Points
+1. **CSV File**: Verify [functions/faqs.csv](mdc:functions/faqs.csv) content
+2. **Update Function**: Check [functions/update_ai_brain.js](mdc:functions/update_ai_brain.js) execution
+3. **Firestore**: Verify data in `knowledge_base/faqs` collection
+4. **AI Function**: Check [functions/index.js](mdc:functions/index.js) data loading
+5. **Response**: Monitor actual AI responses
+
+## 🎯 Common Issues and Solutions
+
+### Issue: AI Returns "Privacy Policy" Response
+**Cause**: AI instructions not strong enough
+**Solution**: Add explicit prohibition in system instructions
+
+### Issue: Old Data Persists
+**Cause**: Firestore cache or update failure
+**Solution**: Add verification logging and re-run update function
+
+### Issue: Slow Response Times
+**Cause**: Artificial delays in code
+**Solution**: Remove setTimeout calls
+
+### Issue: FAQ Data Not Loading
+**Cause**: Wrong collection/document path
+**Solution**: Verify Firestore path: `knowledge_base/faqs`
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,188 @@
+# Firestore Safety Rules
+
+## Critical: Always validate data before saving to Firestore to prevent undefined errors
+
+### ❌ COMMON ERROR (Causes Firestore failures)
+```javascript
+// DANGEROUS: Direct assignment without validation
+const chatKey = refers.userChat.contactKey;
+const userId = refers.userChat.userId;
+
+// This will cause: "Cannot use 'undefined' as a Firestore value"
+await db.collection('conversations').doc(messageId).set({
+  userId, userChatId, chatKey,  // chatKey might be undefined
+  sender: personType === 'manager' ? 'human' : 'user',
+  text,
+  timestamp: admin.firestore.Timestamp.fromMillis(messageEntity.createdAt)
+});
+```
+
+### ✅ SAFE IMPLEMENTATION (Always use this)
+```javascript
+// 1. Extract data with fallback values
+const personType = messageEntity.personType;
+const text = messageEntity.plainText || '';
+const messageId = messageEntity.id;
+const userId = refers.userChat.userId || '';
+const userChatId = refers.userChat.id || '';
+const chatKey = refers.userChat.contactKey || ''; // CRITICAL: undefined 방지
+const language = messageEntity.language || 'ko';
+
+// 2. Create safe data object with validation
+const messageData = {
+  userId: userId || '',
+  userChatId: userChatId || '',
+  chatKey: chatKey || '',
+  sender: personType === 'manager' ? 'human' : 'user',
+  text: text || '',
+  timestamp: admin.firestore.Timestamp.fromMillis(messageEntity.createdAt || Date.now())
+};
+
+// 3. Save with validated data
+await db.collection('conversations').doc(messageId).set(messageData);
+```
+
+## Key Safety Patterns
+
+### 1. Data Extraction with Fallbacks
+```javascript
+// Always provide fallback values for potentially undefined fields
+const userId = refers.userChat.userId || '';
+const userChatId = refers.userChat.id || '';
+const chatKey = refers.userChat.contactKey || '';
+const language = messageEntity.language || 'ko';
+const text = messageEntity.plainText || '';
+```
+
+### 2. Safe Object Creation
+```javascript
+// Create data object with explicit fallbacks
+const safeData = {
+  userId: userId || '',
+  userChatId: userChatId || '',
+  chatKey: chatKey || '',
+  sender: sender || 'user',
+  text: text || '',
+  timestamp: timestamp || new Date()
+};
+```
+
+### 3. AI Response Storage Safety
+```javascript
+// AI response storage with validation
+await db.collection('conversations').add({
+  userId: userId || '',
+  userChatId: userChatId || '',
+  chatKey: chatKey || '',
+  sender: 'ai', 
+  text: aiReply || '',
+  timestamp: new Date()
+});
+```
+
+## Common Error Patterns to Avoid
+
+### ❌ Don't do this:
+```javascript
+// Direct assignment without validation
+const data = { userId, userChatId, chatKey, text };
+await db.collection('conversations').add(data);
+
+// Missing fallback for timestamp
+timestamp: admin.firestore.Timestamp.fromMillis(messageEntity.createdAt)
+
+// No validation for required fields
+const chatKey = refers.userChat.contactKey;
+```
+
+### ✅ Always do this:
+```javascript
+// Validate all fields before saving
+const safeData = {
+  userId: userId || '',
+  userChatId: userChatId || '',
+  chatKey: chatKey || '',
+  text: text || '',
+  timestamp: admin.firestore.Timestamp.fromMillis(messageEntity.createdAt || Date.now())
+};
+await db.collection('conversations').add(safeData);
+```
+
+## Debugging Checklist
+
+### Before saving to Firestore:
+- [ ] All string fields have `|| ''` fallback
+- [ ] All timestamp fields have `|| Date.now()` fallback
+- [ ] All object fields are validated
+- [ ] No direct assignment of potentially undefined values
+- [ ] Data object is created with explicit validation
+
+### Common undefined sources:
+- `refers.userChat.contactKey` - might be undefined
+- `messageEntity.language` - might be undefined
+- `messageEntity.plainText` - might be undefined
+- `messageEntity.createdAt` - might be undefined
+- `aiReply` - might be undefined after AI processing
+
+## Error Prevention Strategy
+
+### 1. Input Validation
+```javascript
+// Validate webhook data before processing
+if (!messageEntity || !refers || !refers.userChat) {
+  console.log('필수 데이터가 없어 요청을 무시합니다.');
+  return res.status(200).send('ignored: missing data');
+}
+```
+
+### 2. Safe Data Extraction
+```javascript
+// Extract with fallbacks
+const safeData = {
+  userId: refers.userChat?.userId || '',
+  userChatId: refers.userChat?.id || '',
+  chatKey: refers.userChat?.contactKey || '',
+  text: messageEntity?.plainText || '',
+  language: messageEntity?.language || 'ko'
+};
+```
+
+### 3. Firestore Save with Validation
+```javascript
+// Always validate before saving
+const firestoreData = Object.fromEntries(
+  Object.entries(safeData).map(([key, value]) => [key, value || ''])
+);
+await db.collection('conversations').add(firestoreData);
+```
+
+## Testing Strategy
+
+### 1. Test with missing data
+```javascript
+// Test webhook with missing fields
+const testWebhook = {
+  entity: { personType: 'user', plainText: 'test' },
+  refers: { userChat: { userId: 'test' } } // missing contactKey
+};
+```
+
+### 2. Verify no undefined errors
+- Check logs for "Cannot use 'undefined' as a Firestore value"
+- Ensure all fields have fallback values
+- Validate data before saving
+
+### 3. Monitor Firestore operations
+```javascript
+console.log('🔍 [Firestore] 저장할 데이터:', JSON.stringify(messageData, null, 2));
+```
+
+## Remember:
+- **Always use fallback values** (`|| ''`, `|| Date.now()`)
+- **Never trust external data** without validation
+- **Create safe data objects** before saving to Firestore
+- **Test with missing data** to catch undefined errors early
+description:
+globs:
+alwaysApply: false
+---

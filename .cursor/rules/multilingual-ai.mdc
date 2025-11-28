@@ -1,0 +1,116 @@
+# Multilingual AI Response Rules
+
+## Critical: Always implement language detection and forced response templates
+
+### ✅ CORRECT Implementation
+```javascript
+// 1. Extract language from ChannelTalk webhook
+const language = messageEntity.language || 'ko';
+
+// 2. Create language-specific forced response templates
+let languageTemplate = '';
+if (language === 'th') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Thai. You MUST respond in Thai language only. Example response format: "สวัสดีค่ะ! ขอบคุณสำหรับคำถามของคุณ..."';
+} else if (language === 'en') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking English. You MUST respond in English language only. Example response format: "Hello! Thank you for your question..."';
+} else if (language === 'ja') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Japanese. You MUST respond in Japanese language only. Example response format: "こんにちは！ご質問ありがとうございます..."';
+} else if (language === 'zh') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Chinese. You MUST respond in Chinese language only. Example response format: "您好！感谢您的提问..."';
+} else if (language === 'vi') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Vietnamese. You MUST respond in Vietnamese language only. Example response format: "Xin chào! Cảm ơn bạn đã hỏi..."';
+} else if (language === 'id') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Indonesian. You MUST respond in Indonesian language only. Example response format: "Halo! Terima kasih atas pertanyaan Anda..."';
+} else if (language === 'ru') {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Russian. You MUST respond in Russian language only. Example response format: "Здравствуйте! Спасибо за ваш вопрос..."';
+} else {
+  languageTemplate = '\n\n[CRITICAL INSTRUCTION] The user is speaking Korean. You MUST respond in Korean language only. Example response format: "안녕하세요! 질문해주셔서 감사합니다..."';
+}
+
+// 3. Include language template in system instruction
+const enhancedSystemInstruction = `${policyContext}
+
+현재 프로모션 정보:
+${promotionsInfo}
+
+제품 가격 정보:
+${pricingInfo}
+
+중요한 지시사항:
+- Answer concisely, within 2-3 sentences.
+- Be friendly and professional.
+
+[핵심 수정] 언어 지시사항:
+CRITICAL: The user's language code is "${language}". You MUST respond ONLY in this exact language. Do NOT use Korean or any other language. If language code is "th", respond in Thai. If language code is "en", respond in English. If language code is "ko", respond in Korean.${languageTemplate}`;
+
+// 4. Use enhanced system instruction in Gemini request
+const geminiRequestBody = {
+  contents: [...conversationHistory, { role: 'user', parts: [{ text: text }] }],
+  systemInstruction: { parts: [{ text: enhancedSystemInstruction }] }
+};
+```
+
+### ❌ INCORRECT Implementation (Causes language mismatch)
+```javascript
+// Missing language detection
+const geminiRequestBody = {
+  contents: [...conversationHistory, { role: 'user', parts: [{ text: text }] }],
+  systemInstruction: { parts: [{ text: policyContext }] }
+};
+
+// Weak language instruction
+const systemInstruction = `${policyContext}\n\nRespond in the same language as the user.`;
+```
+
+## Key Requirements:
+
+### 1. Language Detection
+- Extract `language` from `messageEntity.language`
+- Provide fallback to Korean (`'ko'`) if not detected
+- Log language for debugging: `console.log('🔍 [Webhook] 최종 사용 언어:', language);`
+
+### 2. Forced Response Templates
+- Use `[CRITICAL INSTRUCTION]` prefix
+- Include example response format in target language
+- Specify exact language requirements
+- Prevent AI from using wrong language
+
+### 3. System Instruction Enhancement
+- Combine policy context with language instructions
+- Include promotions and pricing information
+- Add response length constraints (2-3 sentences)
+- Use multiple reinforcement techniques
+
+### 4. Debugging and Logging
+```javascript
+console.log('🔍 [Webhook] 채널톡에서 받은 언어 정보:', messageEntity.language);
+console.log('🔍 [Webhook] 최종 사용 언어:', language);
+console.log('🔍 [Webhook] 사용자 메시지:', text);
+console.log('🔍 [AI] Gemini에게 보내는 최종 요청 데이터:', JSON.stringify(geminiRequestBody, null, 2));
+```
+
+## Supported Languages:
+- Korean (ko) - Default
+- Thai (th)
+- English (en)
+- Japanese (ja)
+- Chinese (zh)
+- Vietnamese (vi)
+- Indonesian (id)
+- Russian (ru)
+
+## Common Error Patterns:
+- Thai question → Korean response
+- Language detection working but AI ignoring instructions
+- Inconsistent language responses
+
+## Debugging Checklist:
+1. ✅ Language extraction from webhook
+2. ✅ Language-specific template creation
+3. ✅ Strong language enforcement in system instruction
+4. ✅ Example response format in target language
+5. ✅ Comprehensive logging for debugging
+description:
+globs:
+alwaysApply: false
+---

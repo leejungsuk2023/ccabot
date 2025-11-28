@@ -1,0 +1,106 @@
+# AI 챗봇 개발 및 데이터 관리 가이드
+
+## 🧠 AI 두뇌 업데이트 시스템
+
+### 핵심 구성 요소
+- **CSV 데이터 소스**: [functions/products.csv](mdc:functions/products.csv), [functions/promotions.csv](mdc:functions/promotions.csv), [functions/faqs.csv](mdc:functions/faqs.csv)
+- **업데이트 스크립트**: [functions/update_ai_brain.js](mdc:functions/update_ai_brain.js)
+- **Firestore 저장소**: knowledge_base, policyContext 컬렉션
+
+### 데이터 흐름
+```
+CSV 파일 → Node.js 스크립트 → Firestore → AI 챗봇 응답
+```
+
+## 📊 CSV 파일 구조
+
+### products.csv (시술 정보)
+```csv
+id,name,price_thb,description
+p1,"슈링크 리프팅 (300샷)",2900,"피부 탄력과 V라인 리프팅..."
+```
+
+### promotions.csv (프로모션 정보)
+```csv
+id,title,description,related_product_id
+promo1,"첫 방문 고객 이벤트","상담 후 당일 시술 예약 시 15% 할인","all"
+```
+
+### faqs.csv (자주 묻는 질문)
+```csv
+id,question,answer
+faq1,"가격이 궁금해요","네, 문의주셔서 감사합니다..."
+```
+
+## 🎯 AI 행동 지침 (피부과 예약 필승공식 v1.0)
+
+### 핵심 전략
+1. **프로모션 선제시**: 첫 질문부터 할인 혜택 제시
+2. **구체적 정보 제공**: knowledge_base 데이터 활용
+3. **선제적 예약 제안**: 구체적인 시간과 함께 예약 유도
+4. **언어 일치**: 고객 언어와 동일한 언어로 응답
+
+### 데이터 활용 방법
+- **시술 가격**: `knowledge_base/products`의 `price_thb` 정보
+- **프로모션**: `knowledge_base/promotions`의 할인 혜택
+- **FAQ**: `knowledge_base/faqs`의 답변 템플릿
+
+## 🔧 기술적 구현
+
+### Firebase Functions 구조
+- [functions/index.js](mdc:functions/index.js) - 메인 웹훅 함수
+- [functions/update_ai_brain.js](mdc:functions/update_ai_brain.js) - AI 업데이트 함수
+- HTTP 트리거로 웹에서 실행 가능
+
+### 의존성 관리
+- `csv-parser`: CSV 파일 읽기
+- `firebase-admin`: Firestore 데이터베이스 접근
+- `firebase-functions/v2`: Firebase Functions v2 문법
+
+## 🚀 배포 및 실행
+
+### 배포 명령어
+```bash
+# 특정 함수만 배포
+firebase deploy --only functions:updateAIBrainHttp
+
+# 전체 함수 배포
+firebase deploy --only functions
+```
+
+### 실행 방법
+```bash
+# 웹 API 호출
+curl "https://asia-northeast3-careconnectai-51631.cloudfunctions.net/updateAIBrainHttp"
+
+# 로컬 실행 (Firebase Functions 환경에서만)
+node update_ai_brain.js
+```
+
+## 🔍 디버깅 및 모니터링
+
+### 로그 확인
+- Firebase Console에서 함수 로그 확인
+- 실시간 에러 모니터링
+- 성공/실패 응답 확인
+
+### 데이터 검증
+- Firestore Console에서 업데이트된 데이터 확인
+- CSV 파일 내용과 Firestore 데이터 일치성 검증
+- AI 응답 품질 테스트
+
+## 📈 성능 최적화
+
+### 메모리 사용량
+- CSV 파일 크기 제한 (1MB 이하 권장)
+- Firestore 배치 작업 사용
+- 불필요한 데이터 로딩 방지
+
+### 응답 시간
+- 비동기 처리 활용
+- 에러 핸들링 최적화
+- 타임아웃 설정 관리
+description:
+globs:
+alwaysApply: false
+---

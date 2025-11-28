@@ -1,0 +1,159 @@
+# AI Response Optimization and Data Management
+
+## 🧠 AI Response Quality Issues
+
+### Problem: AI Ignores Updated FAQ Data
+**Symptoms**: AI continues giving old responses despite CSV updates
+**Root Cause**: Data synchronization issues between CSV and Firestore
+
+### Solution: Enhanced Data Verification
+```javascript
+// In [functions/index.js](mdc:functions/index.js), add detailed logging
+console.log('🔍 [AI] Firestore에서 조회한 FAQ 데이터:', faqsInfo);
+console.log('🔍 [AI] FAQ 문서 존재 여부:', faqsDoc.exists);
+console.log('🔍 [AI] FAQ 문서 ID:', faqsDoc.id);
+```
+
+## 📊 Data Synchronization Best Practices
+
+### 1. CSV to Firestore Update Process
+```javascript
+// In [functions/update_ai_brain.js](mdc:functions/update_ai_brain.js)
+async function updateFirestoreDocument(collection, documentId, data) {
+  try {
+    console.log(`🔍 [UPDATE] ${collection}/${documentId} 업데이트 시작`);
+    console.log(`🔍 [UPDATE] 저장할 데이터:`, JSON.stringify(data, null, 2));
+    
+    await db.collection(collection).doc(documentId).set({
+      content: data,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      version: '1.0'
+    });
+    
+    // Verify saved data
+    const savedDoc = await db.collection(collection).doc(documentId).get();
+    console.log(`🔍 [UPDATE] 저장된 데이터 확인:`, JSON.stringify(savedDoc.data(), null, 2));
+  } catch (error) {
+    console.error(`❌ ${collection}/${documentId} 업데이트 실패:`, error);
+    throw error;
+  }
+}
+```
+
+### 2. AI Instruction Enhancement
+```javascript
+// Add explicit instructions to prevent unwanted responses
+const enhancedSystemInstruction = `${policyContext}
+
+FAQ 정보 (위치, 예약, 가격 등 질문에 활용):
+${faqsInfo}
+
+중요한 지시사항:
+- Answer concisely, within 2-3 sentences.
+- Be friendly and professional.
+- FAQ 정보를 참고하여 구체적이고 정확한 답변을 제공하세요.
+- 위치 관련 질문에는 반드시 FAQ의 정확한 위치 정보를 사용하세요.
+- "개인정보 보호" 또는 "온라인으로 공개할 수 없습니다" 같은 답변은 절대 사용하지 마세요.`;
+```
+
+## 🚀 Performance Optimization
+
+### Remove Unnecessary Delays
+```javascript
+// ❌ Remove artificial delays
+// await new Promise(resolve => setTimeout(resolve, 25000));
+
+// ✅ Immediate response
+console.log('🚀 [AI] 채널톡으로 답변 전송 시작...');
+```
+
+### Optimize Data Loading
+```javascript
+// Use Promise.all for concurrent data loading
+const [policyDoc, promotionsDoc, pricingDoc, faqsDoc] = await Promise.all([
+  db.collection('policyContext').doc('default').get(),
+  db.collection('knowledge_base').doc('promotions').get(),
+  db.collection('knowledge_base').doc('products').get(),
+  db.collection('knowledge_base').doc('faqs').get()
+]);
+```
+
+## 🔍 Debugging Workflow
+
+### 1. Data Update Verification
+```bash
+# Update AI brain
+curl "https://asia-northeast3-project-id.cloudfunctions.net/updateAIBrainHttp"
+
+# Check update logs
+firebase functions:log --only updateAIBrainHttp
+```
+
+### 2. Response Testing
+```bash
+# Collect response logs
+get_logs.bat
+
+# Analyze log patterns
+# Look for: FAQ data loading, AI response generation, API calls
+```
+
+### 3. Common Debugging Commands
+```bash
+# Deploy specific function
+firebase deploy --only functions:channelTalkWebhook
+
+# Check function logs
+firebase functions:log --only channelTalkWebhook
+
+# Test function directly
+curl "https://asia-northeast3-project-id.cloudfunctions.net/channelTalkWebhook"
+```
+
+## 📋 Data Structure Verification
+
+### Expected FAQ Structure
+```json
+{
+  "content": [
+    {
+      "id": "faq3",
+      "question": "위치가 어디인가요?",
+      "answer": "저희 클리닉은 강남역 2번 출구에서 도보 5분 거리에 있습니다."
+    },
+    {
+      "id": "faq5",
+      "question": "병원은 어디에 있어요?",
+      "answer": "저희 클리닉은 강남역 2번 출구에서 도보 5분 거리에 있습니다."
+    }
+  ],
+  "version": "1.0",
+  "updatedAt": "timestamp"
+}
+```
+
+### Firestore Collection Structure
+- `knowledge_base/faqs` - FAQ data
+- `knowledge_base/products` - Product information
+- `knowledge_base/promotions` - Promotion data
+- `policyContext/default` - AI behavior instructions
+
+## 🎯 Response Quality Checklist
+
+### Pre-Deployment
+- [ ] CSV files contain correct data
+- [ ] AI update function executed successfully
+- [ ] Firestore data verified through logs
+- [ ] AI instructions include explicit prohibitions
+- [ ] Response delays removed
+
+### Post-Deployment
+- [ ] FAQ data appears correctly in logs
+- [ ] AI uses updated location information
+- [ ] No "privacy policy" responses
+- [ ] Response time is acceptable
+- [ ] All API calls successful
+description:
+globs:
+alwaysApply: false
+---
