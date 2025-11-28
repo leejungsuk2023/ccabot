@@ -124,13 +124,8 @@ async function getAiDecision({ userInput, sessionId, language = 'ko', intentStat
         topP: 0.9,            // 자연스러운 문장 구성
         topK: 50              // 완전한 문장 생성을 위한 선택의 폭 확대
       },
-      tools: [{ 
-        googleSearchRetrieval: {
-          dynamicRetrievalConfig: {
-            mode: "MODE_DYNAMIC",
-            dynamicThreshold: 0.7
-          }
-        }
+      tools: [{
+        googleSearch: {}
       }]
     };
     const { data } = await axios.post(url, requestBody);
@@ -237,13 +232,8 @@ async function getFinalResponse({ userInput, toolResult, language = 'ko', decisi
         topP: 0.9,            // 자연스러운 문장 구성
         topK: 50              // 완전한 문장 생성을 위한 선택의 폭 확대
       },
-      tools: [{ 
-        googleSearchRetrieval: {
-          dynamicRetrievalConfig: {
-            mode: "MODE_DYNAMIC",
-            dynamicThreshold: 0.7
-          }
-        }
+      tools: [{
+        googleSearch: {}
       }]
     };
     const { data } = await axios.post(url, requestBody);
