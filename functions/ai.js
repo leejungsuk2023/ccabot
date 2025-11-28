@@ -119,10 +119,10 @@ async function getAiDecision({ userInput, sessionId, language = 'ko', intentStat
       contents,
       systemInstruction: { parts: [{ text: system }] },
       generationConfig: {
-        maxOutputTokens: 180,  // 250글자 ≈ 180 토큰 (한글 기준)
-        temperature: 0.7,      // 일관성 있는 응답
-        topP: 0.9,            // 자연스러운 문장 구성
-        topK: 50              // 완전한 문장 생성을 위한 선택의 폭 확대
+        maxOutputTokens: 500,  // JSON 응답이 완전히 생성되도록 충분한 토큰 할당
+        temperature: 0.7,
+        topP: 0.9,
+        topK: 50
       }
       // Note: googleSearch removed here - JSON output required for decision making
     };
