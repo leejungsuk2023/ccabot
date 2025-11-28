@@ -115,18 +115,16 @@ async function getAiDecision({ userInput, sessionId, language = 'ko', intentStat
     // --- END OF CRITICAL CHANGE ---
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    const requestBody = { 
-      contents, 
+    const requestBody = {
+      contents,
       systemInstruction: { parts: [{ text: system }] },
       generationConfig: {
         maxOutputTokens: 180,  // 250글자 ≈ 180 토큰 (한글 기준)
         temperature: 0.7,      // 일관성 있는 응답
         topP: 0.9,            // 자연스러운 문장 구성
         topK: 50              // 완전한 문장 생성을 위한 선택의 폭 확대
-      },
-      tools: [{
-        googleSearch: {}
-      }]
+      }
+      // Note: googleSearch removed here - JSON output required for decision making
     };
     const { data } = await axios.post(url, requestBody);
     const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
