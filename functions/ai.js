@@ -225,7 +225,7 @@ async function getFinalResponse({ userInput, toolResult, language = 'ko', decisi
       contents, 
       systemInstruction: { parts: [{ text: system }] },
       generationConfig: {
-        maxOutputTokens: 180,  // 250글자 ≈ 180 토큰 (한글 기준)
+        maxOutputTokens: 400,  // 여유있게 생성 후 후처리에서 250글자로 제한
         temperature: 0.7,      // 일관성 있는 응답
         topP: 0.9,            // 자연스러운 문장 구성
         topK: 50              // 완전한 문장 생성을 위한 선택의 폭 확대
